@@ -233,14 +233,6 @@ function computeSingleAction(
   };
 }
 
-function getDrinkSlots(settings: Settings) {
-  const pouchHrid = settings.equipment["/equipment_types/pouch"];
-  if (!pouchHrid) return 1;
-  const pouch = gameData.itemDetailMap[pouchHrid];
-  if (pouch === undefined) return 1;
-  return 1 + pouch.equipmentDetail.combatStats.drinkSlots;
-}
-
 export function computeActions(settings: Settings, market: Market) {
   let filteredActions = actions;
 
@@ -301,7 +293,7 @@ export function computeActions(settings: Settings, market: Market) {
       ? teaLoadoutsByActionType[a.type]!
       : [emptyTeaLoadout];
 
-    const drinkSlots = getDrinkSlots(settings);
+    const drinkSlots = 3;
     teaLoadouts = teaLoadouts.filter((teaLoadout) => {
       return teaLoadout.teaHrids.length <= drinkSlots;
     });

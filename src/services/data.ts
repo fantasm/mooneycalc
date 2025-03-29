@@ -27,43 +27,12 @@ export const ItemDetailSchema = z.object({
   description: z.string(),
   categoryHrid: z.string(),
   sellPrice: z.number(),
-  isTradable: z.boolean(),
-  isOpenable: z.boolean(),
-  itemLevel: z.number(),
-  enhancementCosts: z.unknown(), // TODO
-  protectionItemHrids: z.unknown(), // TODO
+  isTradable: z.boolean().optional(),
+  itemLevel: z.number().optional(),
   equipmentDetail: z.object({
     type: z.string(),
-    combatStats: z.object({
-      // TODO
-      drinkSlots: z.number(),
-    }),
-    noncombatStats: z.object({
-      milkingSpeed: z.number(),
-      foragingSpeed: z.number(),
-      woodcuttingSpeed: z.number(),
-      cheesesmithingSpeed: z.number(),
-      craftingSpeed: z.number(),
-      tailoringSpeed: z.number(),
-      cookingSpeed: z.number(),
-      brewingSpeed: z.number(),
-      enhancingSpeed: z.number(),
-      taskSpeed: z.number(),
-      milkingEfficiency: z.number(),
-      foragingEfficiency: z.number(),
-      woodcuttingEfficiency: z.number(),
-      cheesesmithingEfficiency: z.number(),
-      craftingEfficiency: z.number(),
-      tailoringEfficiency: z.number(),
-      cookingEfficiency: z.number(),
-      brewingEfficiency: z.number(),
-      skillingEfficiency: z.number(),
-      enhancingSuccess: z.number(),
-      gatheringQuantity: z.number(),
-      skillingRareFind: z.number(),
-      skillingExperience: z.number(),
-    }),
-  }),
+    noncombatStats: z.record(z.number()).nullable()
+  }).optional(),
   consumableDetail: z.object({
     cooldownDuration: z.number(),
     usableInActionTypeMap: z.record(z.boolean()).nullable(),
@@ -72,8 +41,7 @@ export const ItemDetailSchema = z.object({
     recoveryDuration: z.number(),
     buffs: z.array(BuffSchema).nullable(),
     defaultCombatTriggers: z.unknown(),
-  }),
-  abilityBookDetail: z.unknown(), // TODO
+  }).optional(),
   sortIndex: z.number(),
 });
 export type ItemDetail = z.infer<typeof ItemDetailSchema>;

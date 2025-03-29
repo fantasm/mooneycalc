@@ -1,23 +1,24 @@
 import { type ItemDetail, gameData } from "./data";
 
-export const items = Object.values(gameData.itemDetailMap).sort(
-  (a, b) => a.sortIndex - b.sortIndex,
+export const items = Object.values(gameData.itemDetailMap ?? {}).sort(
+	(a, b) => a.sortIndex - b.sortIndex,
 );
 
 export function itemName(itemHrid: string) {
-  return gameData.itemDetailMap[itemHrid]?.name ?? itemHrid;
+	return gameData.itemDetailMap?.[itemHrid]?.name ?? itemHrid;
 }
 
 export function itemsByEquipmentType(equipmentTypeHrid: string) {
-  return Object.values(gameData.itemDetailMap)
-    .filter((item) => item.equipmentDetail.type === equipmentTypeHrid)
-    .sort((a, b) => a.sortIndex - b.sortIndex);
+	return Object.values(gameData.itemDetailMap ?? {})
+		.filter((item) => item.equipmentDetail?.type === equipmentTypeHrid)
+		.sort((a, b) => a.sortIndex - b.sortIndex);
 }
 
 export function isSkillingEquipment(item: ItemDetail) {
-  return (
-    Object.values(item.equipmentDetail.noncombatStats).some(
-      (stat) => stat !== 0,
-    ) || item.equipmentDetail.combatStats.drinkSlots > 0
-  );
+	return (
+		item.equipmentDetail &&
+		Object.values(item.equipmentDetail.noncombatStats ?? {}).some(
+			(stat) => stat !== 0,
+		)
+	);
 }
