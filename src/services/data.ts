@@ -31,7 +31,8 @@ export const ItemDetailSchema = z.object({
   itemLevel: z.number().optional(),
   equipmentDetail: z.object({
     type: z.string(),
-    noncombatStats: z.record(z.number()).nullable()
+    noncombatStats: z.record(z.number()).nullable(),
+	noncombatEnhancementBonuses: z.record(z.number()).nullable(),
   }).optional(),
   consumableDetail: z.object({
     cooldownDuration: z.number(),
@@ -83,6 +84,7 @@ export const ActionDetailSchema = z.object({
     value: z.number(),
   }),
   dropTable: z.array(DropTableEntrySchema).nullable(),
+  essenceDropTable: z.array(DropTableEntrySchema).nullable(),
   rareDropTable: z.array(DropTableEntrySchema).nullable(),
   upgradeItemHrid: z.string(),
   inputItems: z.array(ItemCountSchema).nullable(),

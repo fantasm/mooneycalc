@@ -5,6 +5,7 @@ import {
 	BUFF_TYPE_ENHANCING_SUCCESS,
 	BUFF_TYPE_GATHERING,
 	BUFF_TYPE_RARE_FIND,
+	BUFF_TYPE_ESSENCE_FIND,
 	BUFF_TYPE_WISDOM,
 	zeroBonuses,
 } from "./buffs";
@@ -36,6 +37,8 @@ export function getEquipmentBonuses(
 	bonuses[BUFF_TYPE_EFFICIENCY] = (bonuses[BUFF_TYPE_EFFICIENCY] ?? 0) + (stats.skillingEfficiency ?? 0);
 	bonuses[BUFF_TYPE_ENHANCING_SUCCESS] = (bonuses[BUFF_TYPE_ENHANCING_SUCCESS] ?? 0) + (stats.enhancingSuccess ?? 0);
 	bonuses[BUFF_TYPE_GATHERING] = (bonuses[BUFF_TYPE_GATHERING] ?? 0) + (stats.gatheringQuantity ?? 0);
+	bonuses[BUFF_TYPE_RARE_FIND] = (bonuses[BUFF_TYPE_RARE_FIND] ?? 0) + (stats.skillingRareFind ?? 0);
+	bonuses[BUFF_TYPE_ESSENCE_FIND] = (bonuses[BUFF_TYPE_ESSENCE_FIND] ?? 0) + (stats.skillingEssenceFind ?? 0);
 	bonuses[BUFF_TYPE_RARE_FIND] = (bonuses[BUFF_TYPE_RARE_FIND] ?? 0) + (stats.skillingRareFind ?? 0);
 	bonuses[BUFF_TYPE_WISDOM] = (bonuses[BUFF_TYPE_WISDOM] ?? 0) + (stats.skillingExperience ?? 0);
 
@@ -71,9 +74,13 @@ export function getEquipmentBonuses(
 		bonuses[BUFF_TYPE_ACTION_SPEED] = (bonuses[BUFF_TYPE_ACTION_SPEED] ?? 0) + (stats.brewingSpeed ?? 0);
 		bonuses[BUFF_TYPE_EFFICIENCY] = (bonuses[BUFF_TYPE_EFFICIENCY] ?? 0) + (stats.brewingEfficiency ?? 0);
 	}
+	if(actionType === "/action_types/alchemy") {
+		bonuses[BUFF_TYPE_ACTION_SPEED] = (bonuses[BUFF_TYPE_ACTION_SPEED] ?? 0) + (stats.alchemySpeed ?? 0);
+        bonuses[BUFF_TYPE_EFFICIENCY] = (bonuses[BUFF_TYPE_EFFICIENCY] ?? 0) + (stats.alchemyEfficiency ?? 0);
+    }
 	if (actionType === "/action_types/enhancing") {
 		bonuses[BUFF_TYPE_ACTION_SPEED] = (bonuses[BUFF_TYPE_ACTION_SPEED] ?? 0) + (stats.enhancingSpeed ?? 0);
-		bonuses[BUFF_TYPE_EFFICIENCY] = (bonuses[BUFF_TYPE_EFFICIENCY] ?? 0) + (stats.enhancingSuccess ?? 0);
+		bonuses[BUFF_TYPE_ENHANCING_SUCCESS] = (bonuses[BUFF_TYPE_ENHANCING_SUCCESS] ?? 0) + (stats.enhancingSuccess ?? 0);
 	}
 
 	const isJewelry = [
@@ -85,7 +92,7 @@ export function getEquipmentBonuses(
 
 	const multiplier =
 		1 +
-		0.01 *
+		0.02 *
 		jewelryMultiplier *
 		gameData.enhancementLevelTotalBonusMultiplierTable[equipmentLevel]!;
 

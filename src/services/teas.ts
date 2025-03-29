@@ -108,9 +108,8 @@ function getTeaBonuses(actionType: string, teaHrid: string) {
 }
 
 export const teaLoadoutsByActionType: Record<string, TeaLoadout[]> = {};
-for (const [actionTypeHrid, teaHrids] of Object.entries(
-	teaCombinationsByActionType,
-)) {
+
+for (const [actionTypeHrid, teaHrids] of Object.entries(teaCombinationsByActionType)) {
 	teaLoadoutsByActionType[actionTypeHrid] = teaHrids.map((teaHrids) => {
 		return {
 			teaHrids,
