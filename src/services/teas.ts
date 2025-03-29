@@ -101,7 +101,7 @@ function getTeaBonuses(actionType: string, teaHrid: string) {
   }
 
   for (const buff of tea.consumableDetail.buffs!) {
-    buffEffects[buff.typeHrid] += buff.flatBoost;
+    buffEffects[buff.typeHrid]! += buff.flatBoost;
   }
 
   return buffEffects;

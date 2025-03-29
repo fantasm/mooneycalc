@@ -25,7 +25,7 @@ export function addBonuses(...effects: Bonuses[]) {
   const result: Bonuses = { ...zeroBonuses };
   for (const effect of effects) {
     for (const [key, value] of Object.entries(effect)) {
-      result[key] += value;
+      result[key]! += value;
     }
   }
   return result;

@@ -58,7 +58,7 @@ function getHouseBonuses(actionType: string, settings: Settings) {
     if (houseRoom.usableInActionTypeMap[actionType] !== true) continue;
 
     for (const buff of [...houseRoom.actionBuffs, ...houseRoom.globalBuffs]) {
-      buffEffects[buff.typeHrid] +=
+      buffEffects[buff.typeHrid]! +=
         buff.flatBoost + buff.flatBoostLevelBonus * (level - 1);
     }
   }
@@ -75,7 +75,7 @@ function getCommunityBuffBonuses(actionType: string, settings: Settings) {
     if (level === 0) continue;
     if (buff.usableInActionTypeMap[actionType] !== true) continue;
 
-    buffEffects[buff.buff.typeHrid] +=
+    buffEffects[buff.buff.typeHrid]! +=
       buff.buff.flatBoost + buff.buff.flatBoostLevelBonus * (level - 1);
   }
 

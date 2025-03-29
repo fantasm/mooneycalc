@@ -19,6 +19,8 @@ next-env.d.ts
 
 # production
 /build
+/.project
+/.settings/
 
 # misc
 .DS_Store
@@ -40,3 +42,4 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
