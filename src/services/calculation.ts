@@ -9,6 +9,7 @@ import {
 	BUFF_TYPE_GOURMET,
 	BUFF_TYPE_ARTISAN,
 	BUFF_TYPE_ACTION_LEVEL,
+	BUFF_TYPE_ALCHEMY_SUCCESS,
 	getLevelBonus,
 } from "./buffs";
 import { communityBuffs } from "./community-buffs";
@@ -22,8 +23,9 @@ import {
 	TEA_PER_HOUR,
 	type TeaLoadout,
 	emptyTeaLoadout,
-	teaLoadoutsByActionType,
+	teaLoadoutByActionType,
 } from "./teas";
+import { alchemyActions } from "./alchemy-actions";
 
 export interface ComputedAction {
 	id: string;
@@ -40,10 +42,11 @@ export interface ComputedAction {
 	profit: number;
 }
 
-interface SimpleActionDetail {
+export interface SimpleActionDetail {
 	hrid: string;
 	name: string;
 	type: string;
+	category: string;
 	levelRequirement: {
 		skillHrid: string;
 		level: number;
@@ -168,24 +171,35 @@ function computeSingleAction(
 		communityBonuses,
 		teaBonuses,
 	);
+	let successBonus = 0;
 
 	// Compute level efficiency
-	let baseLevel = settings.levels[action.levelRequirement.skillHrid]!;
-	if (baseLevel < action.levelRequirement.level)
-		baseLevel = action.levelRequirement.level;
+	const baseLevel = settings.levels[action.levelRequirement.skillHrid]!;
 	const levelBonus = getLevelBonus(action.levelRequirement.skillHrid, bonuses);
 	const boostedLevel = baseLevel + levelBonus;
-	const actionLevel =
-		action.levelRequirement.level + bonuses[BUFF_TYPE_ACTION_LEVEL]!;
+	const actionLevel = action.levelRequirement.level + bonuses[BUFF_TYPE_ACTION_LEVEL]!;
 	const levelsAboveRequirement = Math.max(0, boostedLevel - actionLevel);
 	const levelEfficiency = 0.01 * levelsAboveRequirement;
+
+	//Compute alchemy success rate
+	if (action.type === "/action_types/alchemy") {
+		if (boostedLevel < actionLevel) {
+			successBonus = -0.9 * (1 - boostedLevel / actionLevel) + bonuses[BUFF_TYPE_ALCHEMY_SUCCESS]!;
+		}
+		else {
+			successBonus = bonuses[BUFF_TYPE_ALCHEMY_SUCCESS]!;
+		}
+	}
+
+	//TODO Catalyst Success Rate 
+	const successRate = Math.min(1, (1 + successBonus) * action.successRate);
+	const successRateCatalyst = Math.min(1, (1 + successBonus + 0.15) * action.successRate);
+	const successRatePrimeCatalyst = Math.min(1, (1 + successBonus + 0.25) * action.successRate);
 
 	// Compute actions per hour
 	const baseActionsPerHour = 3600_000_000_000 / action.baseTimeCost;
 	const speed = 1 + bonuses[BUFF_TYPE_ACTION_SPEED]!;
 	const efficiency = 1 + bonuses[BUFF_TYPE_EFFICIENCY]! + levelEfficiency;
-	if (action.hrid === "/actions/milking/holy_cow")
-		console.log(action.name, speed, efficiency);
 	const actionsPerHour = baseActionsPerHour * speed * efficiency;
 
 	// Compute inputs
@@ -201,6 +215,7 @@ function computeSingleAction(
 	if (action.upgradeItemHrid) {
 		inputs.push({ itemHrid: action.upgradeItemHrid, count: 1 });
 	}
+
 	// Compute outputs
 	let outputs = action.outputItems ?? [];
 
@@ -212,6 +227,12 @@ function computeSingleAction(
 			count: count * gourmetBonus,
 		})) ?? [];
 
+	// Apply success Rate
+	outputs = outputs.map(({ itemHrid, count }) => ({
+		itemHrid,
+		count: count * successRate,
+	})) ?? [];
+
 	// Apply gathering bonus and add drop table to outputs
 	const gatheringBonus = 1 + bonuses[BUFF_TYPE_GATHERING]!;
 	if (action.dropTable) {
@@ -222,16 +243,9 @@ function computeSingleAction(
 		outputs = [...outputs, ...dropTableOutputs];
 	}
 
-	const inputsCost = inputs.reduce(
-		(sum, input) =>
-			sum + getInputPrice(input.itemHrid, settings, market) * input.count,
-		0,
-	);
-	const revenue = outputs.reduce((sum, output) => {
-		return (
-			sum + getOutputPrice(output.itemHrid, settings, market) * output.count
-		);
-	}, 0);
+	const inputsCost = inputs.reduce((sum, input) => sum + getInputPrice(input.itemHrid, settings, market) * input.count, 0,);
+
+	const revenue = outputs.reduce((sum, output) => sum + getOutputPrice(output.itemHrid, settings, market) * output.count, 0);
 
 	const outputBidAskSpreads = outputs.map((output) => {
 		const { bid, ask } = market.market[itemName(output.itemHrid)] ?? {
@@ -276,14 +290,15 @@ function simplfyActions(actions: ActionDetail[]): SimpleActionDetail[] {
 			name: a.name,
 			type: a.type,
 			levelRequirement: a.levelRequirement,
+			category: a.category,
 			baseTimeCost: a.baseTimeCost,
+			successRate: 1,
 			inputItems: a.inputItems ?? [],
 			outputItems: a.outputItems ?? [],
 			dropTable: a.dropTable ?? [],
 			essenceDropTable: a.essenceDropTable ?? [],
 			rareDropTable: a.rareDropTable ?? [],
 			upgradeItemHrid: a.upgradeItemHrid,
-			successRate: 1,
 		};
 		return action;
 	});
@@ -292,11 +307,9 @@ function simplfyActions(actions: ActionDetail[]): SimpleActionDetail[] {
 
 export function computeActions(settings: Settings, market: Market) {
 	let filteredActions = simplfyActions(actions);
-
 	// Filter out combat and enhancement actions
 	filteredActions = filteredActions.filter(
-		(a) =>
-			a.type !== "/action_types/combat" && a.type !== "/action_types/enhancing" && a.type !== "/action_types/alchemy",
+		(a) => a.type !== "/action_types/combat" && a.type !== "/action_types/enhancing" && a.type !== "/action_types/alchemy",
 	);
 
 	// Filter out actions with unmet level requirements
@@ -306,6 +319,8 @@ export function computeActions(settings: Settings, market: Market) {
 			return level >= a.levelRequirement.level;
 		});
 	}
+
+	filteredActions = [...filteredActions, ...alchemyActions];
 
 	// Precompute equipment bonuses for each action type
 	const equipmentBonusesByActionType: Record<string, Bonuses> = {};
@@ -327,31 +342,16 @@ export function computeActions(settings: Settings, market: Market) {
 	}
 
 	const computedActions = filteredActions.flatMap((a) => {
-		let teaLoadouts: TeaLoadout[] = settings.filters.showAutoTeas
-			? teaLoadoutsByActionType[a.type] ?? [emptyTeaLoadout]
-			: [emptyTeaLoadout];
+		const teaLoadout: TeaLoadout = teaLoadoutByActionType[a.type] ?? emptyTeaLoadout;
 
-		const drinkSlots = 2;
-		teaLoadouts = teaLoadouts.filter((teaLoadout) => {
-			return teaLoadout.teaHrids.length <= drinkSlots;
-		});
-
-		const candidateActions = teaLoadouts.map((teaLoadout) => {
-			return computeSingleAction(
-				a,
-				teaLoadout,
-				equipmentBonusesByActionType[a.type]!,
-				settings,
-				market,
-			);
-		});
-
-		// Keep candidate acton with the maximum profit
-		const bestAction = candidateActions.reduce((best, current) => {
-			return current.profit > best.profit ? current : best;
-		});
-
-		return bestAction;
+		return computeSingleAction(
+			a,
+			teaLoadout,
+			equipmentBonusesByActionType[a.type]!,
+			settings,
+			market,
+		);
 	});
+
 	return computedActions;
 }
