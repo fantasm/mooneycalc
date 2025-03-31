@@ -2,9 +2,10 @@ import { gameData, type DropTableEntry, type ItemCount } from "./data";
 import { type SimpleActionDetail } from "./calculation"
 
 function createAlchemyAction(itemName: string, suffix: string, level: number, successRate: number, inputItems: ItemCount[], outputItems: ItemCount[], essenceDropTable: DropTableEntry[], rareDropTable: DropTableEntry[]): SimpleActionDetail {
+	const capitalize = <T extends string>(s: T) => (s[0]!.toUpperCase() + s.slice(1)) as Capitalize<typeof s>;
 	return {
 		hrid: "/skills/alchemy/" + suffix + "/" + itemName,
-		name: itemName + "(" + suffix + ")",
+		name: itemName + "(" + capitalize(suffix) + ")",
 		type: "/action_types/alchemy",
 		levelRequirement: { skillHrid: "/skills/alchemy", level: level },
 		category: "/action_categories/alchemy/" + suffix,
@@ -71,7 +72,7 @@ function initializeAlchemyActions(): SimpleActionDetail[] {
 				alchemyActions.push(createAlchemyAction(item.name, "decompose", item.itemLevel ?? 0, 0.6,
 					[
 						{ itemHrid: item.hrid, count: 1 * item.alchemyDetail.bulkMultiplier },
-						{ itemHrid: "/items/coin", count: 5 * (item.itemLevel ?? 0 + 10) * item.alchemyDetail.bulkMultiplier }
+						{ itemHrid: "/items/coin", count: 5 * ((item.itemLevel ?? 0) + 10) * item.alchemyDetail.bulkMultiplier }
 					],
 					item.alchemyDetail.decomposeItems.map(a => ({ ...a, count: a.count * item.alchemyDetail!.bulkMultiplier })),
 					essenceDropTable, rareDropTable

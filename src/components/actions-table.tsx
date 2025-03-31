@@ -31,24 +31,6 @@ export const columns: ColumnDef<ComputedAction>[] = [
     cell: ({ row }) => row.original.levelRequired,
   },
   {
-    accessorKey: "teas",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Teas" />
-    ),
-    cell: ({ row }) => {
-      const action = row.original;
-      return (
-        <>
-          {action.teas.map((teaHrid) => (
-            <div key={teaHrid}>
-              <ItemDetail hrid={teaHrid} />
-            </div>
-          ))}
-        </>
-      );
-    },
-  },
-  {
     accessorKey: "inputs",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Inputs" />

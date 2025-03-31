@@ -61,7 +61,7 @@ export const emptyTeaLoadout: TeaLoadout = {
 
 function getTeaBonuses(actionType: string, teaHrid: string) {
 	const tea = gameData.itemDetailMap[teaHrid]!;
-	const buffEffects: number = { ...zeroBonuses };
+	const buffEffects = { ...zeroBonuses };
 
 	if (!tea.consumableDetail) {
 		console.log(`No consumable details for tea ${teaHrid}`);
@@ -77,7 +77,6 @@ function getTeaBonuses(actionType: string, teaHrid: string) {
 		buffEffects[buff.typeHrid]! += buff.flatBoost;
 		buffEffects[buff.typeHrid]! += buff.ratioBoost;
 	}
-
 	return buffEffects;
 }
 

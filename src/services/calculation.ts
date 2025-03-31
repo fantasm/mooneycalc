@@ -76,6 +76,13 @@ export interface SimpleActionDetail {
 	successRate: number;
 }
 
+export interface ItemSource {
+	hrid: string;
+	name: string;
+	timeCost: number;
+	inputItems: ItemCount[];
+}
+
 function lerp(a: number, b: number, t: number) {
 	// This is needed to support cases where a or b is infinity
 	if (t <= 0) return a;
@@ -242,6 +249,24 @@ function computeSingleAction(
 		}));
 		outputs = [...outputs, ...dropTableOutputs];
 	}
+
+	// Simplify outputs by removing outputs same with inputs 
+	outputs.forEach(function(item1) {
+		inputs.forEach(function(item2) {
+			if (item1.itemHrid === item2.itemHrid) {
+				if (item1.count > item2.count) {
+					item1.count -= item2.count;
+					inputs.splice(inputs.indexOf(item2), 1);
+				} else if (item1.count < item2.count) {
+					outputs.splice(outputs.indexOf(item1), 1);
+					item2.count -= item1.count;
+				} else if (item1.count === item2.count) {
+					outputs.splice(outputs.indexOf(item1), 1);
+					inputs.splice(inputs.indexOf(item2), 1);
+				}
+			}
+		});
+	});
 
 	const inputsCost = inputs.reduce((sum, input) => sum + getInputPrice(input.itemHrid, settings, market) * input.count, 0,);
 
