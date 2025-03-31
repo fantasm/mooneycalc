@@ -198,11 +198,6 @@ function computeSingleAction(
 		}
 	}
 
-	//TODO Catalyst Success Rate 
-	const successRate = Math.min(1, (1 + successBonus) * action.successRate);
-	const successRateCatalyst = Math.min(1, (1 + successBonus + 0.15) * action.successRate);
-	const successRatePrimeCatalyst = Math.min(1, (1 + successBonus + 0.25) * action.successRate);
-
 	// Compute actions per hour
 	const baseActionsPerHour = 3600_000_000_000 / action.baseTimeCost;
 	const speed = 1 + bonuses[BUFF_TYPE_ACTION_SPEED]!;
@@ -226,20 +221,6 @@ function computeSingleAction(
 	// Compute outputs
 	let outputs = action.outputItems ?? [];
 
-	// Apply gourmet bonus
-	const gourmetBonus = 1 + bonuses[BUFF_TYPE_GOURMET]!;
-	outputs =
-		outputs.map(({ itemHrid, count }) => ({
-			itemHrid,
-			count: count * gourmetBonus,
-		})) ?? [];
-
-	// Apply success Rate
-	outputs = outputs.map(({ itemHrid, count }) => ({
-		itemHrid,
-		count: count * successRate,
-	})) ?? [];
-
 	// Apply gathering bonus and add drop table to outputs
 	const gatheringBonus = 1 + bonuses[BUFF_TYPE_GATHERING]!;
 	if (action.dropTable) {
@@ -248,6 +229,65 @@ function computeSingleAction(
 			count: e.dropRate * 0.5 * (e.minCount + e.maxCount) * gatheringBonus,
 		}));
 		outputs = [...outputs, ...dropTableOutputs];
+	}
+
+	// Apply gourmet bonus
+	const gourmetBonus = 1 + bonuses[BUFF_TYPE_GOURMET]!;
+	outputs =
+		outputs.map(({ itemHrid, count }) => ({
+			itemHrid,
+			count: count * gourmetBonus,
+		})) ?? [];
+
+	// Apply alchemy success Rate
+	const successRate = Math.min(1, (1 + successBonus) * action.successRate);
+	const successRateCatalyst = Math.min(1, (1 + successBonus + 0.15) * action.successRate);
+	const successRatePrimeCatalyst = Math.min(1, (1 + successBonus + 0.25) * action.successRate);
+
+	const outputsWithCatalyst = outputs.map(({ itemHrid, count }) => ({
+		itemHrid,
+		count: count * successRateCatalyst,
+	})) ?? [];
+
+	const outputsWithPrimeCatalyst = outputs.map(({ itemHrid, count }) => ({
+		itemHrid,
+		count: count * successRatePrimeCatalyst,
+	})) ?? [];
+
+	outputs = outputs.map(({ itemHrid, count }) => ({
+		itemHrid,
+		count: count * successRate,
+	})) ?? [];
+
+	const revenueWithCatalyst = outputsWithCatalyst.reduce((sum, output) => sum + getOutputPrice(output.itemHrid, settings, market) * output.count, 0);
+	const revenueWithPrimeCatalyst = outputsWithPrimeCatalyst.reduce((sum, output) => sum + getOutputPrice(output.itemHrid, settings, market) * output.count, 0);
+	const revenueOrigin = outputs.reduce((sum, output) => sum + getOutputPrice(output.itemHrid, settings, market) * output.count, 0);
+
+	const catalystHrid = (action.category === "/action_categories/alchemy/coinify") ? "/items/catalyst_of_coinification" :
+		(action.category === "/action_categories/alchemy/decompose") ? "/items/catalyst_of_decomposition" :
+			(action.category === "/action_categories/alchemy/transmute") ? "catalyst_of_transmutation" :
+				"";
+				
+	if (revenueWithCatalyst - getInputPrice(catalystHrid, settings, market) * successRateCatalyst > revenueOrigin) {
+		if (revenueWithPrimeCatalyst - getInputPrice("/items/prime_catalyst", settings, market) * successRatePrimeCatalyst > revenueWithCatalyst - getInputPrice(catalystHrid, settings, market) * successRateCatalyst) {
+			inputs.push({
+				itemHrid: "/items/prime_catalyst",
+				count: successRatePrimeCatalyst,
+			});
+			outputs = outputsWithPrimeCatalyst;
+		} else {
+			inputs.push({
+				itemHrid: catalystHrid,
+				count: successRateCatalyst,
+			});
+			outputs = outputsWithCatalyst;
+		}
+	} else if (revenueWithPrimeCatalyst - revenueOrigin > getInputPrice("/items/prime_catalyst", settings, market) * successRatePrimeCatalyst) {
+		inputs.push({
+			itemHrid: "/items/prime_catalyst",
+			count: successRatePrimeCatalyst,
+		});
+		outputs = outputsWithPrimeCatalyst;
 	}
 
 	// Simplify outputs by removing outputs same with inputs 
